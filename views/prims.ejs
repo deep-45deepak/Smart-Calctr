@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🌳 Prim’s MST Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-green-100 via-blue-50 to-indigo-100 min-h-screen font-sans text-gray-800">
+
+  <header class="bg-white shadow-md sticky top-0 z-50 p-5 flex justify-between items-center">
+    <h1 class="text-3xl font-bold text-green-600">🌳 Prim’s MST Visualizer</h1>
+    <a href="/" class="text-green-600 hover:underline text-lg">🏠 Home</a>
+  </header>
+
+  <main class="max-w-5xl mx-auto px-4 py-10">
+    <section class="text-center mb-10">
+      <h2 class="text-4xl font-semibold">Enter Weighted Graph Matrix</h2>
+      <p class="text-gray-600 mt-2 text-lg">Use <span class="font-medium text-red-500">9999</span> for no direct edge</p>
+    </section>
+
+    <div class="flex flex-col md:flex-row justify-center items-center gap-6 mb-8">
+      <div class="flex items-center gap-3">
+        <label class="text-lg font-medium">Number of Vertices:</label>
+        <input id="vertexInput" type="number" min="2" max="10" value="4" title="Between 2 and 10"
+          class="border border-gray-300 rounded px-4 py-2 w-24 shadow focus:outline-none focus:ring-2 focus:ring-green-400" />
+      </div>
+      <button onclick="createMatrix()"
+        class="bg-green-500 hover:bg-green-600 text-white px-6 py-2 rounded shadow transition-all duration-300">
+        🔄 Generate Matrix
+      </button>
+    </div>
+
+    <!-- Matrix inputs -->
+    <div id="matrixInputs" class="overflow-x-auto pb-4"></div>
+
+    <!-- Run button -->
+    <div class="text-center mt-6">
+      <button onclick="runPrims()" id="solveBtn"
+        class="bg-indigo-600 hover:bg-indigo-700 text-white px-8 py-3 rounded-lg text-lg transition-all duration-300 shadow-md">
+        ▶️ Find MST
+      </button>
+    </div>
+
+    <!-- Output -->
+    <section id="output" class="mt-12 text-center hidden">
+      <h3 class="text-2xl font-bold text-green-700 mb-4">✅ MST Edges</h3>
+      <div id="resultTable" class="inline-block bg-white shadow rounded p-4"></div>
+      <p id="totalCost" class="text-xl text-indigo-600 mt-4 font-semibold"></p>
+    </section>
+  </main>
+
+  <footer class="text-center text-sm text-gray-500 py-6 border-t mt-10">
+    &copy; 2025 SmartAlgo — Visualizing Prim’s Algorithm with style 🌿
+  </footer>
+
+  <script>
+    function createMatrix() {
+      const n = parseInt(document.getElementById("vertexInput").value);
+      const matrixInputs = document.getElementById("matrixInputs");
+      matrixInputs.innerHTML = "";
+
+      const table = document.createElement("table");
+      table.className = "mx-auto border-collapse border border-gray-300 shadow-md";
+      
+      const headerRow = table.insertRow();
+      headerRow.insertCell().textContent = ""; // Empty corner cell
+      for (let j = 0; j < n; j++) {
+        const th = document.createElement("th");
+        th.textContent = `V${j}`;
+        th.className = "px-4 py-2 bg-gray-100 border border-gray-300";
+        headerRow.appendChild(th);
+      }
+
+      for (let i = 0; i < n; i++) {
+        const row = table.insertRow();
+        const th = document.createElement("th");
+        th.textContent = `V${i}`;
+        th.className = "px-4 py-2 bg-gray-100 border border-gray-300";
+        row.appendChild(th);
+
+        for (let j = 0; j < n; j++) {
+          const td = row.insertCell();
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = 0;
+          input.value = i === j ? 0 : 9999;
+          input.title = `Weight from V${i} to V${j}`;
+          input.className = "w-16 h-10 text-center border border-gray-400 rounded-md shadow-sm";
+          input.id = `cell-${i}-${j}`;
+          td.appendChild(input);
+        }
+      }
+
+      matrixInputs.appendChild(table);
+      document.getElementById("output").classList.add("hidden");
+    }
+
+    function runPrims() {
+      const n = parseInt(document.getElementById("vertexInput").value);
+      let cost = [], visited = [], total = 0, result = [];
+
+      // UI loading state
+      const solveBtn = document.getElementById("solveBtn");
+      solveBtn.disabled = true;
+      solveBtn.textContent = "⏳ Solving...";
+
+      setTimeout(() => {
+        for (let i = 0; i < n; i++) {
+          cost[i] = [];
+          visited[i] = false;
+          for (let j = 0; j < n; j++) {
+            cost[i][j] = parseInt(document.getElementById(`cell-${i}-${j}`).value) || 9999;
+          }
+        }
+
+        visited[0] = true;
+
+        for (let edges = 0; edges < n - 1; edges++) {
+          let min = 9999, x = -1, y = -1;
+
+          for (let i = 0; i < n; i++) {
+            if (visited[i]) {
+              for (let j = 0; j < n; j++) {
+                if (!visited[j] && cost[i][j] < min) {
+                  min = cost[i][j];
+                  x = i;
+                  y = j;
+                }
+              }
+            }
+          }
+
+          if (x !== -1 && y !== -1) {
+            result.push({ from: x, to: y, weight: cost[x][y] });
+            total += cost[x][y];
+            visited[y] = true;
+          }
+        }
+
+        displayMST(result, total);
+        solveBtn.disabled = false;
+        solveBtn.textContent = "▶️ Find MST";
+      }, 600); // simulate animation
+    }
+
+    function displayMST(edges, totalCost) {
+      const table = document.createElement("table");
+      table.className = "border-collapse border border-gray-300";
+
+      const header = table.insertRow();
+      ["From", "To", "Weight"].forEach(text => {
+        const th = document.createElement("th");
+        th.textContent = text;
+        th.className = "border border-gray-300 px-6 py-2 bg-gray-100";
+        header.appendChild(th);
+      });
+
+      edges.forEach(edge => {
+        const row = table.insertRow();
+        [edge.from, edge.to, edge.weight].forEach(val => {
+          const cell = row.insertCell();
+          cell.textContent = `V${val}`;
+          if (typeof val === "number" && val === edge.weight) cell.textContent = val;
+          cell.className = "border border-gray-300 px-6 py-2";
+        });
+      });
+
+      const resultDiv = document.getElementById("resultTable");
+      resultDiv.innerHTML = "";
+      resultDiv.appendChild(table);
+
+      document.getElementById("totalCost").textContent = `🌟 Total MST Cost: ${totalCost}`;
+      document.getElementById("output").classList.remove("hidden");
+    }
+
+    window.onload = createMatrix;
+  </script>
+
+</body>
+
+</html>

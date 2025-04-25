@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Kruskal's Algorithm Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen font-sans text-gray-800">
+
+  <header class="bg-white shadow p-5 text-center sticky top-0 z-50">
+    <h1 class="text-3xl font-bold text-purple-600">🕸️ Kruskal's MST Visualizer</h1>
+    <p class="text-gray-600 mt-1">Build a graph, enter edge data, and find its MST</p>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-6">
+    <!-- Graph Inputs -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block font-medium text-lg">🔢 Number of Vertices</label>
+        <input id="vertices" type="number" value="4" min="2" max="20" title="Total nodes in your graph"
+          class="w-full border rounded px-4 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+      </div>
+      <div>
+        <label class="block font-medium text-lg">🔗 Number of Edges</label>
+        <input id="edges" type="number" value="5" min="1" max="50" title="Total edges in the graph"
+          class="w-full border rounded px-4 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+      </div>
+    </div>
+
+    <div class="text-center mb-6">
+      <button onclick="generateEdgeInputs()"
+        class="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 transition duration-300 shadow">
+        ➕ Generate Edge Inputs
+      </button>
+    </div>
+
+    <!-- Edge Inputs -->
+    <div id="edgeInputs" class="space-y-4 mb-6 transition-all"></div>
+
+    <!-- Solve Button -->
+    <div class="text-center">
+      <button onclick="kruskalMST()"
+        class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 text-lg transition duration-300 shadow-md">
+        🚀 Find MST
+      </button>
+    </div>
+
+    <!-- Output Section -->
+    <section id="output" class="mt-10 hidden">
+      <h2 class="text-2xl font-semibold text-purple-700 text-center mb-4">📊 MST Result</h2>
+      <div class="bg-white shadow-md rounded-lg p-4 text-center">
+        <table class="table-auto w-full border border-collapse border-gray-300">
+          <thead>
+            <tr class="bg-gray-100 text-gray-700">
+              <th class="border px-4 py-2">From</th>
+              <th class="border px-4 py-2">To</th>
+              <th class="border px-4 py-2">Weight</th>
+            </tr>
+          </thead>
+          <tbody id="mstTableBody"></tbody>
+        </table>
+        <p id="totalCost" class="text-xl mt-4 text-indigo-700 font-bold"></p>
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center text-sm text-gray-500 py-6 border-t mt-10">
+    &copy; 2025 SmartAlgo — Visualizing Kruskal’s Algorithm with Style ✨
+  </footer>
+
+  <script>
+    function generateEdgeInputs() {
+      const edgeCount = parseInt(document.getElementById('edges').value);
+      const container = document.getElementById('edgeInputs');
+      container.innerHTML = '';
+
+      for (let i = 0; i < edgeCount; i++) {
+        const edgeDiv = document.createElement('div');
+        edgeDiv.className = 'flex gap-4 justify-center';
+
+        ['From', 'To', 'Weight'].forEach((label) => {
+          const input = document.createElement('input');
+          input.placeholder = label;
+          input.type = 'number';
+          input.min = 0;
+          input.className = 'w-24 px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300';
+          input.id = `${label.toLowerCase()}-${i}`;
+          edgeDiv.appendChild(input);
+        });
+
+        container.appendChild(edgeDiv);
+      }
+
+      document.getElementById('output').classList.add('hidden');
+    }
+
+    function kruskalMST() {
+      const V = parseInt(document.getElementById('vertices').value);
+      const E = parseInt(document.getElementById('edges').value);
+      let edges = [];
+
+      for (let i = 0; i < E; i++) {
+        const from = parseInt(document.getElementById(`from-${i}`).value);
+        const to = parseInt(document.getElementById(`to-${i}`).value);
+        const weight = parseInt(document.getElementById(`weight-${i}`).value);
+
+        if (isNaN(from) || isNaN(to) || isNaN(weight)) {
+          alert(`Please fill all fields for edge ${i + 1}`);
+          return;
+        }
+
+        edges.push({ from, to, weight });
+      }
+
+      // Sort edges by weight
+      edges.sort((a, b) => a.weight - b.weight);
+
+      let parent = Array.from({ length: V }, (_, i) => i);
+
+      function find(i) {
+        if (parent[i] === i) return i;
+        return parent[i] = find(parent[i]);
+      }
+
+      function union(i, j) {
+        const a = find(i), b = find(j);
+        if (a !== b) parent[a] = b;
+      }
+
+      let mst = [], cost = 0;
+      for (let edge of edges) {
+        if (find(edge.from) !== find(edge.to)) {
+          union(edge.from, edge.to);
+          mst.push(edge);
+          cost += edge.weight;
+        }
+      }
+
+      // Output Results
+      const tbody = document.getElementById("mstTableBody");
+      tbody.innerHTML = '';
+      mst.forEach(edge => {
+        const row = document.createElement('tr');
+        [edge.from, edge.to, edge.weight].forEach(val => {
+          const td = document.createElement('td');
+          td.className = "border px-4 py-2";
+          td.textContent = val;
+          row.appendChild(td);
+        });
+        tbody.appendChild(row);
+      });
+
+      document.getElementById("totalCost").textContent = `Total MST Cost: ${cost}`;
+      document.getElementById("output").classList.remove('hidden');
+    }
+
+    window.onload = generateEdgeInputs;
+  </script>
+</body>
+
+</html>

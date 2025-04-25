@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Dijkstra's Algorithm Visualizer</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-purple-50 to-pink-50 min-h-screen font-sans text-gray-800">
+
+  <header class="bg-white shadow p-5 text-center sticky top-0 z-50">
+    <h1 class="text-3xl font-bold text-purple-600">🚗 Dijkstra's Shortest Path Visualizer</h1>
+    <p class="text-gray-600 mt-1">Enter graph details and find the shortest path from source</p>
+  </header>
+
+  <main class="max-w-4xl mx-auto p-6">
+    <!-- Graph Inputs -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+      <div>
+        <label class="block font-medium text-lg">🔢 Number of Vertices</label>
+        <input id="vertices" type="number" value="5" min="2" max="20" title="Total nodes in your graph"
+          class="w-full border rounded px-4 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+      </div>
+      <div>
+        <label class="block font-medium text-lg">🔗 Number of Edges</label>
+        <input id="edges" type="number" value="6" min="1" max="50" title="Total edges in the graph"
+          class="w-full border rounded px-4 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+      </div>
+    </div>
+
+    <div class="text-center mb-6">
+      <button onclick="generateEdgeInputs()"
+        class="bg-purple-600 text-white px-6 py-2 rounded hover:bg-purple-700 transition duration-300 shadow">
+        ➕ Generate Edge Inputs
+      </button>
+    </div>
+
+    <!-- Edge Inputs -->
+    <div id="edgeInputs" class="space-y-4 mb-6"></div>
+
+    <!-- Source Node -->
+    <div class="mb-6">
+      <label for="source" class="block font-medium text-lg">🌍 Source Node</label>
+      <input id="source" type="number" value="0" min="0" class="w-full border rounded px-4 py-2 mt-1 focus:outline-none focus:ring-2 focus:ring-purple-300" />
+    </div>
+
+    <!-- Solve Button -->
+    <div class="text-center">
+      <button onclick="dijkstra()" class="bg-blue-600 text-white px-8 py-3 rounded-lg hover:bg-blue-700 text-lg transition duration-300 shadow-md">
+        🚀 Find Shortest Path
+      </button>
+    </div>
+
+    <!-- Output Section -->
+    <section id="output" class="mt-10 hidden">
+      <h2 class="text-2xl font-semibold text-purple-700 text-center mb-4">📊 Shortest Path Results</h2>
+      <div class="bg-white shadow-md rounded-lg p-4 text-center">
+        <table class="table-auto w-full border border-collapse border-gray-300">
+          <thead>
+            <tr class="bg-gray-100 text-gray-700">
+              <th class="border px-4 py-2">Node</th>
+              <th class="border px-4 py-2">Distance from Source</th>
+            </tr>
+          </thead>
+          <tbody id="resultTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <footer class="text-center text-sm text-gray-500 py-6 border-t mt-10">
+    &copy; 2025 SmartAlgo — Visualizing Dijkstra’s Algorithm ✨
+  </footer>
+
+  <script>
+    function generateEdgeInputs() {
+      const edgeCount = parseInt(document.getElementById('edges').value);
+      const container = document.getElementById('edgeInputs');
+      container.innerHTML = '';
+
+      for (let i = 0; i < edgeCount; i++) {
+        const edgeDiv = document.createElement('div');
+        edgeDiv.className = 'flex gap-4 justify-center';
+
+        ['From', 'To', 'Weight'].forEach((label) => {
+          const input = document.createElement('input');
+          input.placeholder = label;
+          input.type = 'number';
+          input.className = 'w-24 px-3 py-2 border rounded shadow-sm focus:outline-none focus:ring-2 focus:ring-purple-300';
+          input.id = `${label.toLowerCase()}-${i}`;
+          edgeDiv.appendChild(input);
+        });
+
+        container.appendChild(edgeDiv);
+      }
+
+      document.getElementById('output').classList.add('hidden');
+    }
+
+    function dijkstra() {
+      const V = parseInt(document.getElementById('vertices').value);
+      const E = parseInt(document.getElementById('edges').value);
+      const source = parseInt(document.getElementById('source').value);
+
+      let graph = Array.from({ length: V }, () => []);
+      let distances = Array(V).fill(Infinity);
+      let visited = Array(V).fill(false);
+      let previous = Array(V).fill(null);
+
+      for (let i = 0; i < E; i++) {
+        const from = parseInt(document.getElementById(`from-${i}`).value);
+        const to = parseInt(document.getElementById(`to-${i}`).value);
+        const weight = parseInt(document.getElementById(`weight-${i}`).value);
+
+        if (!isNaN(from) && !isNaN(to) && !isNaN(weight)) {
+          graph[from].push({ to, weight });
+          graph[to].push({ from, weight }); // for undirected graph
+        }
+      }
+
+      distances[source] = 0;
+      let unvisited = Array.from({ length: V }, (_, i) => i);
+
+      while (unvisited.length > 0) {
+        unvisited.sort((a, b) => distances[a] - distances[b]);
+        const u = unvisited.shift();
+
+        visited[u] = true;
+
+        graph[u].forEach(({ to, weight }) => {
+          if (!visited[to] && distances[u] + weight < distances[to]) {
+            distances[to] = distances[u] + weight;
+            previous[to] = u;
+          }
+        });
+      }
+
+      // Display the result
+      const tbody = document.getElementById('resultTableBody');
+      tbody.innerHTML = '';
+      for (let i = 0; i < V; i++) {
+        const row = document.createElement('tr');
+        const tdNode = document.createElement('td');
+        const tdDistance = document.createElement('td');
+        tdNode.className = 'border px-4 py-2';
+        tdDistance.className = 'border px-4 py-2';
+        tdNode.textContent = `Node ${i}`;
+        tdDistance.textContent = distances[i] === Infinity ? '∞' : distances[i];
+        row.appendChild(tdNode);
+        row.appendChild(tdDistance);
+        tbody.appendChild(row);
+      }
+
+      document.getElementById('output').classList.remove('hidden');
+    }
+
+    window.onload = generateEdgeInputs;
+  </script>
+</body>
+
+</html>

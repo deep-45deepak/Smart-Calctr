@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Job Scheduling</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200 min-h-screen items-center justify-center">
+
+  <header class="bg-gradient-to-r from-indigo-200 via-purple-200 to-pink-200 shadow-md sticky top-0 p-5 flex justify-between items-center z-50">
+    <h1 class="text-3xl font-bold text-indigo-600">🔁 Job Scheduling</h1>
+    <a href="/" class="text-indigo-500 hover:underline">🏠 Home</a>
+  </header>
+
+  <div class="bg-white shadow-2xl rounded-2xl m-4 p-6 w-auto max-w-3xl">
+    <h1 class="text-3xl font-bold text-center text-indigo-700 mb-6">Job Scheduling Problem Solver</h1>
+
+    <form id="jobForm" class="space-y-4">
+      <div class="grid grid-cols-3 gap-4">
+        <input type="text" placeholder="Job ID" class="p-2 rounded border" required />
+        <input type="number" placeholder="Deadline" class="p-2 rounded border" required />
+        <input type="number" placeholder="Profit" class="p-2 rounded border" required />
+      </div>
+      <button type="button" onclick="addJob()" class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-2 rounded shadow">Add Job</button>
+      <button type="submit" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded shadow">Solve</button>
+    </form>
+
+    <div class="mt-6">
+      <h2 class="text-xl font-semibold text-gray-700 mb-2">Jobs Added:</h2>
+      <ul id="jobList" class="list-disc list-inside text-gray-600"></ul>
+    </div>
+
+    <div class="mt-6">
+      <h2 class="text-xl font-semibold text-gray-700 mb-2">Scheduled Jobs:</h2>
+      <div id="output" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+    </div>
+  </div>
+
+  <footer class="text-center text-sm text-gray-500 py-6 border-t mt-10">
+    &copy; 2025 SmartAlgo — Built for understanding algorithms with beauty 🌸
+  </footer>
+
+  <script>
+    let jobs = [];
+
+    function addJob() {
+      const inputs = document.querySelectorAll('#jobForm input');
+      const id = inputs[0].value;
+      const deadline = parseInt(inputs[1].value);
+      const profit = parseInt(inputs[2].value);
+
+      if (!id || !deadline || !profit) return;
+
+      jobs.push({ id, deadline, profit });
+      document.getElementById('jobList').innerHTML += `<li>${id} (Deadline: ${deadline}, Profit: ${profit})</li>`;
+      inputs.forEach(input => input.value = '');
+    }
+
+    function scheduleJobs(jobs) {
+      // Sort jobs by descending profit
+      jobs.sort((a, b) => b.profit - a.profit);
+      const maxDeadline = Math.max(...jobs.map(job => job.deadline));
+      const result = Array(maxDeadline).fill(null);
+
+      let totalProfit = 0;
+      let jobSequence = [];
+
+      for (let job of jobs) {
+        for (let j = job.deadline - 1; j >= 0; j--) {
+          if (!result[j]) {
+            result[j] = job;
+            totalProfit += job.profit;
+            jobSequence.push(job);
+            break;
+          }
+        }
+      }
+
+      return { jobSequence, totalProfit };
+    }
+
+    document.getElementById('jobForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const { jobSequence, totalProfit } = scheduleJobs(jobs);
+      const outputDiv = document.getElementById('output');
+      outputDiv.innerHTML = jobSequence.map(job => `
+        <div class="bg-purple-100 p-4 rounded shadow">
+          <p><strong>Job ID:</strong> ${job.id}</p>
+          <p><strong>Deadline:</strong> ${job.deadline}</p>
+          <p><strong>Profit:</strong> ₹${job.profit}</p>
+        </div>
+      `).join('');
+      outputDiv.innerHTML += `
+        <div class="bg-green-100 p-4 rounded shadow col-span-full">
+          <p class="text-lg font-semibold text-green-700">Total Profit: ₹${totalProfit}</p>
+        </div>
+      `;
+    });
+  </script>
+
+</body>
+</html>

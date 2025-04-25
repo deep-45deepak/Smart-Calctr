@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Transitive Closure Solver</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-indigo-50 via-sky-50 to-emerald-50 min-h-screen text-gray-800">
+
+  <header class="bg-white shadow-md sticky top-0 p-5 flex justify-between items-center z-50">
+    <h1 class="text-3xl font-bold text-indigo-600">🔁 Transitive Closure</h1>
+    <a href="/" class="text-indigo-500 hover:underline">🏠 Home</a>
+  </header>
+
+  <main class="max-w-4xl mx-auto px-6 py-12">
+    <section class="text-center mb-10">
+      <h2 class="text-4xl font-semibold mb-2">Enter Adjacency Matrix</h2>
+      <p class="text-gray-600 text-lg">Get transitive closure using Floyd-Warshall algorithm</p>
+    </section>
+
+    <!-- Matrix size input -->
+    <div class="mb-8 flex items-center justify-center gap-4">
+      <label class="text-lg font-medium">Matrix Size (n x n):</label>
+      <input id="sizeInput" type="number" min="2" max="10" value="3"
+        class="border border-gray-300 rounded px-4 py-2 w-24" />
+      <button onclick="createMatrix()" class="bg-indigo-500 text-white px-4 py-2 rounded hover:bg-indigo-600">
+        Generate Matrix
+      </button>
+    </div>
+
+    <!-- Matrix input form -->
+    <div id="matrixInputs" class="space-y-4 mb-8 text-center"></div>
+
+    <div class="text-center">
+      <button onclick="computeClosure()"
+        class="bg-green-500 text-white px-6 py-3 rounded-lg hover:bg-green-600 text-lg font-medium transition">
+        Calculate Transitive Closure
+      </button>
+    </div>
+
+    <!-- Output -->
+    <section id="output" class="mt-12 text-center hidden">
+      <h3 class="text-2xl font-bold text-indigo-700 mb-4">📊 Transitive Closure Matrix</h3>
+      <div id="resultTable" class="inline-block p-4 bg-white shadow rounded-lg"></div>
+    </section>
+  </main>
+
+  <footer class="text-center text-sm text-gray-500 py-6 border-t mt-10">
+    &copy; 2025 SmartAlgo — Built for understanding algorithms with beauty 🌸
+  </footer>
+
+  <script>
+    function createMatrix() {
+      const size = parseInt(document.getElementById("sizeInput").value);
+      const matrixInputs = document.getElementById("matrixInputs");
+      matrixInputs.innerHTML = "";
+
+      for (let i = 0; i < size; i++) {
+        const row = document.createElement("div");
+        row.className = "flex justify-center gap-2";
+        for (let j = 0; j < size; j++) {
+          const input = document.createElement("input");
+          input.type = "number";
+          input.min = 0;
+          input.max = 1;
+          input.value = 0;
+          input.className = "w-12 h-12 text-center border border-gray-400 rounded-md shadow-sm";
+          input.id = `cell-${i}-${j}`;
+          row.appendChild(input);
+        }
+        matrixInputs.appendChild(row);
+      }
+
+      document.getElementById("output").classList.add("hidden");
+    }
+
+    function computeClosure() {
+      const size = parseInt(document.getElementById("sizeInput").value);
+      let graph = [];
+
+      for (let i = 0; i < size; i++) {
+        graph[i] = [];
+        for (let j = 0; j < size; j++) {
+          graph[i][j] = parseInt(document.getElementById(`cell-${i}-${j}`).value) || 0;
+        }
+      }
+
+      // Floyd-Warshall for Transitive Closure
+      for (let k = 0; k < size; k++) {
+        for (let i = 0; i < size; i++) {
+          for (let j = 0; j < size; j++) {
+            graph[i][j] = graph[i][j] || (graph[i][k] && graph[k][j]) ? 1 : 0;
+          }
+        }
+      }
+
+      displayResult(graph);
+    }
+
+    function displayResult(matrix) {
+      const table = document.createElement("table");
+      table.className = "border-collapse border border-gray-300";
+
+      matrix.forEach(row => {
+        const tr = document.createElement("tr");
+        row.forEach(val => {
+          const td = document.createElement("td");
+          td.textContent = val;
+          td.className = "border border-gray-300 px-4 py-2 text-lg";
+          tr.appendChild(td);
+        });
+        table.appendChild(tr);
+      });
+
+      const resultDiv = document.getElementById("resultTable");
+      resultDiv.innerHTML = "";
+      resultDiv.appendChild(table);
+
+      document.getElementById("output").classList.remove("hidden");
+    }
+
+    // Initial matrix on load
+    window.onload = createMatrix;
+  </script>
+
+</body>
+
+</html>
