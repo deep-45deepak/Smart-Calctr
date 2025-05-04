@@ -33,7 +33,7 @@ app.get('/dijkstras', (req, res) => {
   res.render('Dijikstras');
 });
 
-app.get('/KnapSack', (req, res) => {
+app.get('/knapsack', (req, res) => {
   res.render('KnapSack');
 });
 
