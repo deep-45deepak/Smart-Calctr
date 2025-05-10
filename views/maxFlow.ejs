@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Maximum Flow Calculator</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background-color: #f0f4f8;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+            min-height: 100vh;
+        }
+
+        .container {
+            background: #fff;
+            padding: 30px;
+            margin-top: 40px;
+            border-radius: 10px;
+            box-shadow: 0 0 12px rgba(0,0,0,0.1);
+            width: 90%;
+            max-width: 700px;
+        }
+
+        h1 {
+            text-align: center;
+            color: #333;
+        }
+
+        label {
+            font-weight: bold;
+        }
+
+        textarea, input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 8px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background-color: #007BFF;
+            color: white;
+            font-weight: bold;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .result {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 15px;
+            border-left: 5px solid #4caf50;
+            border-radius: 6px;
+            margin-top: 20px;
+        }
+
+        .error {
+            color: red;
+            font-weight: bold;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Maximum Flow (Ford-Fulkerson)</h1>
+
+    <label for="matrix">Enter Adjacency Matrix (capacities):</label>
+    <textarea id="matrix" rows="6" placeholder="Example (4 nodes):&#10;0 3 0 3&#10;0 0 2 0&#10;0 0 0 2&#10;0 0 0 0"></textarea>
+
+    <label for="source">Source Node Index:</label>
+    <input type="number" id="source" placeholder="e.g. 0">
+
+    <label for="sink">Sink Node Index:</label>
+    <input type="number" id="sink" placeholder="e.g. 3">
+
+    <button onclick="calculateMaxFlow()">Compute Maximum Flow</button>
+
+    <div id="result" class="result" style="display: none;"></div>
+    <div id="error" class="error"></div>
+</div>
+
+<script>
+    function parseMatrix(text) {
+        return text.trim().split('\n').map(row =>
+            row.trim().split(/\s+/).map(Number)
+        );
+    }
+
+    function bfs(rGraph, s, t, parent) {
+        const visited = Array(rGraph.length).fill(false);
+        const queue = [];
+        queue.push(s);
+        visited[s] = true;
+        parent[s] = -1;
+
+        while (queue.length > 0) {
+            const u = queue.shift();
+            for (let v = 0; v < rGraph.length; v++) {
+                if (!visited[v] && rGraph[u][v] > 0) {
+                    if (v === t) {
+                        parent[v] = u;
+                        return true;
+                    }
+                    queue.push(v);
+                    parent[v] = u;
+                    visited[v] = true;
+                }
+            }
+        }
+        return false;
+    }
+
+    function fordFulkerson(graph, s, t) {
+        const rGraph = graph.map(row => row.slice());
+        const parent = Array(graph.length);
+        let maxFlow = 0;
+
+        while (bfs(rGraph, s, t, parent)) {
+            let pathFlow = Infinity;
+            for (let v = t; v !== s; v = parent[v]) {
+                const u = parent[v];
+                pathFlow = Math.min(pathFlow, rGraph[u][v]);
+            }
+
+            for (let v = t; v !== s; v = parent[v]) {
+                const u = parent[v];
+                rGraph[u][v] -= pathFlow;
+                rGraph[v][u] += pathFlow;
+            }
+
+            maxFlow += pathFlow;
+        }
+
+        return maxFlow;
+    }
+
+    function calculateMaxFlow() {
+        try {
+            const matrixText = document.getElementById("matrix").value;
+            const graph = parseMatrix(matrixText);
+
+            const source = parseInt(document.getElementById("source").value);
+            const sink = parseInt(document.getElementById("sink").value);
+
+            if (
+                isNaN(source) || isNaN(sink) ||
+                source < 0 || sink < 0 ||
+                source >= graph.length || sink >= graph.length
+            ) {
+                document.getElementById("error").textContent = "Invalid source or sink.";
+                return;
+            }
+
+            const maxFlow = fordFulkerson(graph, source, sink);
+
+            document.getElementById("result").style.display = "block";
+            document.getElementById("result").innerHTML = `<strong>Maximum Flow:</strong> ${maxFlow}`;
+            document.getElementById("error").textContent = "";
+        } catch (err) {
+            document.getElementById("error").textContent = "Error parsing matrix. Please check your input.";
+        }
+    }
+</script>
+</body>
+</html>

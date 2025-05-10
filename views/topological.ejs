@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Topological Sort</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <style>
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background-color: #f4f6f9;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 40px 20px;
+    }
+
+    .container {
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 700px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #2c3e50;
+    }
+
+    label {
+      font-weight: bold;
+      margin-top: 20px;
+      display: block;
+    }
+
+    textarea, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #ccc;
+    }
+
+    button {
+      background-color: #2e86de;
+      color: white;
+      font-weight: bold;
+      margin-top: 20px;
+      transition: background-color 0.3s;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #2162b3;
+    }
+
+    .result {
+      background-color: #e8f5e9;
+      border-left: 5px solid #43a047;
+      padding: 15px;
+      margin-top: 20px;
+      border-radius: 6px;
+      color: #2e7d32;
+    }
+
+    .error {
+      color: red;
+      font-weight: bold;
+      text-align: center;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+  <h1>Topological Sort (DAG Only)</h1>
+
+  <label for="adjList">Enter Graph as Adjacency List:</label>
+  <textarea id="adjList" rows="6" placeholder="Example (5 nodes):&#10;0: 1 2&#10;1: 3&#10;2: 3&#10;3: 4&#10;4:"></textarea>
+
+  <label for="method">Sorting Method:</label>
+  <select id="method">
+    <option value="dfs">DFS-Based</option>
+    <option value="kahn">Kahn's Algorithm (BFS)</option>
+  </select>
+
+  <button onclick="runTopologicalSort()">Perform Topological Sort</button>
+
+  <div id="error" class="error"></div>
+  <div id="result" class="result" style="display: none;"></div>
+</div>
+
+<script>
+  function parseAdjList(input) {
+    const lines = input.trim().split('\n');
+    const graph = {};
+    for (const line of lines) {
+      const [node, neighbors] = line.split(':');
+      graph[parseInt(node)] = neighbors ? neighbors.trim().split(/\s+/).map(Number) : [];
+    }
+    return graph;
+  }
+
+  function dfsTopSort(graph) {
+    const visited = {};
+    const result = [];
+
+    function dfs(node) {
+      visited[node] = true;
+      for (const neighbor of graph[node]) {
+        if (!visited[neighbor]) dfs(neighbor);
+      }
+      result.push(node);
+    }
+
+    for (const node in graph) {
+      if (!visited[node]) dfs(Number(node));
+    }
+
+    return result.reverse();
+  }
+
+  function kahnTopSort(graph) {
+    const inDegree = {};
+    const queue = [];
+    const result = [];
+
+    for (const node in graph) {
+      inDegree[node] = 0;
+    }
+
+    for (const node in graph) {
+      for (const neighbor of graph[node]) {
+        inDegree[neighbor] = (inDegree[neighbor] || 0) + 1;
+      }
+    }
+
+    for (const node in inDegree) {
+      if (inDegree[node] === 0) queue.push(Number(node));
+    }
+
+    while (queue.length > 0) {
+      const node = queue.shift();
+      result.push(node);
+      for (const neighbor of graph[node]) {
+        inDegree[neighbor]--;
+        if (inDegree[neighbor] === 0) queue.push(neighbor);
+      }
+    }
+
+    if (result.length !== Object.keys(graph).length) {
+      throw new Error("Cycle detected! Topological sort not possible.");
+    }
+
+    return result;
+  }
+
+  function runTopologicalSort() {
+    try {
+      const input = document.getElementById("adjList").value;
+      const method = document.getElementById("method").value;
+      const graph = parseAdjList(input);
+
+      let result;
+      if (method === "dfs") {
+        result = dfsTopSort(graph);
+      } else {
+        result = kahnTopSort(graph);
+      }
+
+      document.getElementById("result").style.display = "block";
+      document.getElementById("result").innerHTML = `<strong>Topological Order:</strong> ${result.join(" → ")}`;
+      document.getElementById("error").textContent = "";
+    } catch (err) {
+      document.getElementById("result").style.display = "none";
+      document.getElementById("error").textContent = err.message;
+    }
+  }
+</script>
+</body>
+</html>

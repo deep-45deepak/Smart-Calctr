@@ -13,6 +13,7 @@ app.get('/', (req, res) => {
   res.render('index');
 });
 
+
 app.get('/jobScheduling', (req, res) => {
   res.render('jobScheduling');
 });
@@ -23,6 +24,14 @@ app.get('/transitiveClosure', (req, res) => {
 
 app.get('/prims', (req, res) => {
   res.render('prims');
+});
+
+app.get('/toposort', (req, res) => {
+  res.render('topological');
+});
+
+app.get('/maxflow', (req, res) => {
+  res.render('maxFlow');
 });
 
 app.get('/kruskals', (req, res) => {
